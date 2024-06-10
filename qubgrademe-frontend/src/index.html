@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>QUBGrader</title>
+
+    <script type="text/javascript">
+
+        // let frontendURL = "http://qubgrademefrontend.40230007.qpc.hal.davecutting.uk"
+        let proxyURL = "http://qubgrademeproxy.40230007.qpc.hal.davecutting.uk/"
+        let proxyURLBackup = "http://qubgrademeproxybackup.40230007.qpc.hal.davecutting.uk/"
+        // D. Frontend Service Failure Handler 
+        // This method is called when the the first proxy fails 
+        function useProxyBackup(service) {
+            console.log("The proxy is unavailable, using backup proxy...")
+            let request = "?service=" + service + getParameters();
+            let xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    var responseFromProxy = JSON.parse(this.response);
+                    if (responseFromProxy.error)
+                        displayError(responseFromProxy.errormessage)
+                    else
+                        display(service, responseFromProxy);
+                }
+            };
+            xhttp.open("GET", proxyURLBackup + request)
+            xhttp.send();
+            return;
+        }
+
+        function getParameters() {
+            let module_1 = document.getElementById('module_1').value
+            let module_2 = document.getElementById('module_2').value
+            let module_3 = document.getElementById('module_3').value
+            let module_4 = document.getElementById('module_4').value
+            let module_5 = document.getElementById('module_5').value
+            let mark_1 = document.getElementById('mark_1').value
+            let mark_2 = document.getElementById('mark_2').value
+            let mark_3 = document.getElementById('mark_3').value
+            let mark_4 = document.getElementById('mark_4').value
+            let mark_5 = document.getElementById('mark_5').value
+            let parameters = "&module_1=" + module_1 + "&mark_1=" + mark_1 + "&module_2=" + module_2 + "&mark_2=" + mark_2
+                + "&module_3=" + module_3 + "&mark_3=" + mark_3 + "&module_4=" + module_4 + "&mark_4=" + mark_4
+                + "&module_5=" + module_5 + "&mark_5=" + mark_5;
+            return parameters;
+        }
+        function isAllFieldsValid() {
+            if (document.getElementById('module_1').value === '') {
+                displayError("Module 1 must be entered");
+                return false
+            } else if (document.getElementById('mark_1').value === '') {
+                displayError("Mark 1 must be entered");
+                return false
+            } else if (document.getElementById('module_2').value === '') {
+                displayError("Module 2 must be entered");
+                return false
+            } else if (document.getElementById('mark_2').value === '') {
+                displayError("Mark 2 must be entered");
+                return false
+            } else if (document.getElementById('module_3').value === '') {
+                displayError("Module 3 must be entered");
+                return false
+            } else if (document.getElementById('mark_3').value === '') {
+                displayError("Mark 3 must be entered");
+                return false
+            } else if (document.getElementById('module_4').value === '') {
+                displayError("Module 4 must be entered");
+                return false
+            } else if (document.getElementById('mark_4').value === '') {
+                displayError("Mark 4 must be entered");
+                return false
+            } else if (document.getElementById('module_5').value === '') {
+                displayError("Module 5 must be entered");
+                return false
+            } else if (document.getElementById('mark_5').value === '') {
+                displayError("Mark 5 must be entered");
+                return false
+            }
+            return true;
+        }
+        // For every function
+        function sendRequestToProxy(service) {
+            if (isAllFieldsValid()) {
+                let request = "?service=" + service + getParameters();
+                let xhttp = new XMLHttpRequest();
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200) {
+                        var responseFromProxy = JSON.parse(this.response);
+                        if (responseFromProxy.error)
+                            displayError(responseFromProxy.errormessage)
+                        else
+                            display(service, responseFromProxy);
+                            // return responseFromProxy.output //Stateful saving
+                    }
+                    // D. Frontend Service Failure Handler 
+                    // If the intial proxy does not return a status code 200 - use the backup
+                    else if (this.readyState == 4 && this.status !== 200) {
+                        useProxyBackup(service);
+                    }
+                };
+                xhttp.open("GET", proxyURL + request)
+                xhttp.send();
+
+
+            }
+        }
+
+        function display(service, responseFromProxy) {
+            if (service === "maxmin") {
+                let max_module = responseFromProxy.max_module;
+                let min_module = responseFromProxy.min_module;
+                document.getElementById('output-text').value = 'Highest scoring module = ' + max_module
+                    + '\nLowest scoring module = ' + min_module;
+            } else if (service === "sort") {
+                let sorted_modules_returned = responseFromProxy.sorted_modules;
+                let sorted_modules = '';
+                for (let i = 0; i < sorted_modules_returned.length; i++) {
+                    sorted_modules += sorted_modules_returned[i]['module'] + ' - ' + sorted_modules_returned[i]['marks'] + '\r\n';
+                }
+                document.getElementById('output-text').value = sorted_modules;
+            } else if (service === "total") {
+                document.getElementById('output-text').value = 'Total marks = ' + responseFromProxy.output;
+            } else if (service === "classify") {
+                document.getElementById('output-text').value = 'Classification = ' + responseFromProxy.output;
+            } else if (service === "average") {
+                document.getElementById('output-text').value = 'Average Mark = ' + responseFromProxy.output;
+            } else if (service === "median") {
+                document.getElementById('output-text').value = 'Median Mark = ' + responseFromProxy.output;
+            } else {
+                displayError('There was an error. The service does not exist');
+            }
+        }
+
+        function displayError(errormessage) {
+            document.getElementById('output-text').value = 'Error Occured: \n' + errormessage;
+        }
+
+        function clearText() {
+            document.getElementById('module_1').value = '';
+            document.getElementById('module_2').value = '';
+            document.getElementById('module_3').value = '';
+            document.getElementById('module_4').value = '';
+            document.getElementById('module_5').value = '';
+
+            document.getElementById('mark_1').value = '';
+            document.getElementById('mark_2').value = '';
+            document.getElementById('mark_3').value = '';
+            document.getElementById('mark_4').value = '';
+            document.getElementById('mark_5').value = '';
+
+            document.getElementById('output-text').value = '';
+        }
+    </script>
+
+    <style type="text/css">
+        body {
+            font-size: 150%;
+            font-family: monospace;
+        }
+
+        #logo {
+            font-family: Calibri, sans-serif;
+            font-weight: lighter;
+            color: #505050;
+            margin: 0.5em;
+        }
+
+        #qga {
+            text-align: center;
+            margin-top: 1em;
+        }
+
+        .display-module {
+            font-size: 90%;
+            color: black;
+            background-color: white;
+            padding: 0.2em;
+            margin: 0.2em;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            width: 480px;
+
+        }
+
+        .display-mark {
+            font-size: 90%;
+            color: black;
+            background-color: white;
+            padding: 0.2em;
+            margin: 0.2em;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            width: 90px;
+
+        }
+
+        .display-output {
+            font-size: 90%;
+            color: white;
+            background-color: black;
+            padding: 0.2em;
+            margin: 0.2em;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            width: 600px;
+
+        }
+
+        .qgabutton-active {
+            background-color: green;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 40px;
+            width: 400px;
+        }
+
+        .qgabutton-inactive {
+            background-color: gray;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 40px;
+            width: 400px;
+        }
+
+        .qgabutton-clear {
+            background-color: red;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 40px;
+            width: 400px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div id="qga">
+        <div id="logo">
+            QUB GradeMe App
+        </div>
+        <div>
+            <input class="display-module" type="text" id="module_1" name="module_1" placeholder="Module 1">
+            <input class="display-mark" type="text" id="mark_1" name="mark_1" placeholder="Mark 1"></br>
+            <input class="display-module" type="text" id="module_2" name="module_2" placeholder="Module 2">
+            <input class="display-mark" type="text" id="mark_2" name="mark_2" placeholder="Mark 2"></br>
+            <input class="display-module" type="text" id="module_3" name="module_3" placeholder="Module 3">
+            <input class="display-mark" type="text" id="mark_3" name="mark_3" placeholder="Mark 3"></br>
+            <input class="display-module" type="text" id="module_4" name="module_4" placeholder="Module 4">
+            <input class="display-mark" type="text" id="mark_4" name="mark_4" placeholder="Mark 4"></br>
+            <input class="display-module" type="text" id="module_5" name="module_5" placeholder="Module 5">
+            <input class="display-mark" type="text" id="mark_5" name="mark_5" placeholder="Mark 5">
+        </div>
+        <div>
+            <textarea class="display-output" id="output-text" rows="5" cols="35" readonly=1
+                placeholder="Results here..." value="">
+        </textarea>
+        </div>
+        <div>
+            <button class="qgabutton-active" onclick="sendRequestToProxy('maxmin');">Highest & Lowest Scoring
+                Modules</button>
+        </div>
+        <div>
+            <button class="qgabutton-active" onclick="sendRequestToProxy('sort');">Sort Modules</button>
+        </div>
+        <div>
+            <button class="qgabutton-active" onclick="sendRequestToProxy('total');">Total Marks</button>
+        </div>
+        <div>
+            <button class="qgabutton-active" onclick="sendRequestToProxy('classify');">Classify Grade</button>
+        </div>
+        <div>
+            <button class="qgabutton-active" onclick="sendRequestToProxy('average');">Average Mark</button>
+        </div>
+        <div>
+            <button class="qgabutton-active" onclick="sendRequestToProxy('median');">Median Mark</button>
+        </div>
+        <div>
+            <button class="qgabutton-clear" onclick="clearText();">Clear</button>
+        </div>
+
+    </div>
+</body>
+
+<script type="text/javascript">
+</script>
+
+</html>

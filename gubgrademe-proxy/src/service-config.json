@@ -1,0 +1,22 @@
+[{
+    "service": "maxmin",
+    "serviceURL": "http://qubgradememaxmin.40230007.qpc.hal.davecutting.uk/"
+}, {
+    "service": "sort",
+    "serviceURL": "http://qubgrademesortmodules.40230007.qpc.hal.davecutting.uk/"
+}, {
+    "service": "total",
+    "serviceURL": "http://qubgrademetotalmarks.40230007.qpc.hal.davecutting.uk/"
+}, {
+    "service": "classify",
+    "serviceURL": "http://qubgrademeclassifygrade.40230007.qpc.hal.davecutting.uk/"
+}, {
+    "service": "average",
+    "serviceURL": "http://qubgrademeaverage.40230007.qpc.hal.davecutting.uk/"
+}, {
+    "service": "median",
+    "serviceURL": "https://qub-grademe-median.azurewebsites.net/api/median/"
+}, {
+    "service": "database",
+    "serviceURL": "https://qub-grademe-database.azurewebsites.net/api/qubgrademe-database/"
+}]

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style type="text/css">
+        body {
+            font-size: 150%;
+            font-family: monospace;
+        }
+
+        #logo {
+            font-family: Calibri, sans-serif;
+            font-weight: lighter;
+            color: #505050;
+            margin: 0.5em;
+        }
+
+        #qga {
+            text-align: center;
+            margin-top: 1em;
+        }
+
+        .display-output {
+            font-size: 65%;
+            color: white;
+            background-color: black;
+            padding: 0.2em;
+            margin: 0.2em;
+            font-family: monospace;
+            letter-spacing: 0.1em;
+            width: 600px;
+
+        }
+
+        .qgabutton-active {
+            background-color: green;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 40px;
+            width: 400px;
+        }
+
+        .qgabutton-clear {
+            background-color: red;
+            color: white;
+            padding: 0px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 18px;
+            margin: 4px 2px;
+            cursor: pointer;
+            height: 40px;
+            width: 400px;
+        }
+    </style>
+
+    <title>QUBGraderMonitoring</title>
+
+    <script type="text/javascript">
+
+        let proxyURL = "http://qubgrademeproxy.40230007.qpc.hal.davecutting.uk/"
+        let proxyURLBackup = "http://qubgrademeproxybackup.40230007.qpc.hal.davecutting.uk/"
+
+        let backupneeded = false;
+        let url = proxyURL;
+
+        function testServices(isGoodRequest = true) {
+            var checkProxyWorking = new XMLHttpRequest();
+            if (!backupneeded) {
+                checkProxyWorking.open("GET", proxyURL)
+                checkProxyWorking.send()
+                checkProxyWorking.onerror = function () {
+                    backupneeded = true;
+                    url = proxyURLBackup;
+                    displayMessageInBox('proxy', "Proxy not responding, switching to backup...\nPlease try again")
+                    console.log("Proxy not working, switching to backup...")
+                }
+            }
+
+
+            var xhttp = new XMLHttpRequest();
+            let request = getRequestString(isGoodRequest);
+            let before = new Date();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState !== 4 || this.status !== 200)
+                    displayMessageInBox('sort', '...')
+                if (this.readyState == 4 && this.status == 200) {
+                    var responseFromProxy = JSON.parse(this.response);
+                    const now = new Date();
+                    const diff = now - before;
+                    if (!backupneeded) {
+                        displayMessageInBox('proxy', "Proxy is responding!")
+                    } else {
+                        displayMessageInBox('proxy', "Backup Proxy is responding!")
+                    }
+                    display("sort", diff, responseFromProxy)
+                    console.log("Sort took " + diff + " milliseconds");
+                }
+            };
+            xhttp.open("GET", url + "?service=sort" + request)
+            xhttp.send();
+            xhttp.onerror = function () {
+                displayMessageInBox('Sort', service + " service is not responsive")
+            }
+            doRequest('maxmin', request)
+            doRequest('total', request)
+            doRequest('classify', request)
+            doRequest('average', request)
+            doRequest('median', request)
+        }
+        function doRequest(service, request) {
+            var xhttp = new XMLHttpRequest();
+            let before = new Date();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState !== 4 || this.status !== 200)
+                    displayMessageInBox(service, '...')
+                if (this.readyState == 4 && this.status == 200) {
+                    var responseFromProxy = JSON.parse(this.response);
+                    const now = new Date();
+                    const diff = now - before;
+                    if (!backupneeded) {
+                        displayMessageInBox('proxy', "Proxy is responding!")
+                    } else {
+                        displayMessageInBox('proxy', "Backup Proxy is responding!")
+                    }
+                    display(service, diff, responseFromProxy)
+                    console.log(service.toUpperCase() + " took " + diff + " milliseconds");
+                }
+            };
+            xhttp.open("GET", url + "?service=" + service + request)
+            xhttp.send();
+            xhttp.onerror = function () {
+                displayMessageInBox(service, service + " service is not responsive")
+            }
+        }
+
+        function getRequestString(isGoodRequest) {
+            if (isGoodRequest) {
+                const modules = ["CSC3069", "CSC3065", "CSC3065", "CSC3068", "CSC3058"];
+                const marks = [generateMark(), generateMark(), generateMark(), generateMark(), generateMark()];
+                displayMessageInBox('data-sent', "Data Sent\n&module_1=" + modules[0] + "&mark_1=" + marks[0] + "&module_2=" + modules[1] + "&mark_2=" + marks[1] + "&module_3=" + modules[2] + "&mark_3=" + marks[2] + "&module_4=" + modules[3] + "&mark_4=" + marks[3] + "&module_5=" + modules[4] + "&mark_5=" + marks[4])
+                var requestStr = "&module_1=" + modules[0] + "&mark_1=" + marks[0] + "&module_2=" + modules[1] + "&mark_2=" + marks[1] + "&module_3=" + modules[2] + "&mark_3=" + marks[2] + "&module_4=" + modules[3] + "&mark_4=" + marks[3] + "&module_5=" + modules[4] + "&mark_5=" + marks[4]
+                return requestStr;
+            }
+            else {
+                const modules = ["CSC3069", "CSC3065", "CSC3065", "CSC3068", "CSC3058"];
+                const marks = [generateMark(-1000), generateMark(-1000), generateMark(1000), generateMark(2000), generateMark(-40)];
+                displayMessageInBox('data-sent', "Data Sent\n&module_1=" + modules[0] + "&mark_1=" + marks[0] + "&module_2=" + modules[1] + "&mark_2=" + marks[1] + "&module_3=" + modules[2] + "&mark_3=" + marks[2] + "&module_4=" + modules[3] + "&mark_4=" + marks[3] + "&module_5=" + modules[4] + "&mark_5=" + marks[4])
+                var requestStr = "&module_1=" + modules[0] + "&mark_1=" + marks[0] + "&module_2=" + modules[1] + "&mark_2=" + marks[1] + "&module_3=" + modules[2] + "&mark_3=" + marks[2] + "&module_4=" + modules[3] + "&mark_4=" + marks[3] + "&module_5=" + modules[4] + "&mark_5=" + marks[4]
+                return requestStr;
+            }
+        }
+        function generateMark(maxLimit = 100) {
+            let rand = Math.random() * maxLimit;
+            rand = Math.floor(rand); // 99
+            return rand;
+        }
+        function display(service, latency, jsonResponse) {
+            console.log(jsonResponse)
+            if (jsonResponse.error)
+                document.getElementById(service).value = "Service: "+service.toUpperCase() + "\nResponse time:\t" + latency + " millisconds\nFailed:\t\t" + jsonResponse.errormessage;
+            else
+                document.getElementById(service).value = "Service: "+service.toUpperCase() + "\nResponse Time:\t" + latency + " millisconds\nPassed:\t\tReturns expected result: " + jsonResponse.output;
+        }
+
+        function displayMessageInBox(box, message) {
+            document.getElementById(box).value = message;
+        }
+
+        // setInterval(testServices, 2000);
+
+    </script>
+
+</head>
+
+<body>
+    <div id="qga">
+        <div id="logo">
+            QUB GradeMe Monitoring App
+        </div>
+        <div>
+            <button class="qgabutton-active" onclick="testServices(true);">Check Service Responses </button>
+        </div>
+        <div>
+            <button class="qgabutton-clear" onclick="testServices(false);">Check with bad request </button>
+        </div>
+        <div>
+            <textarea class="display-output" id="proxy" rows="1" cols="35" readonly=1 value="">
+        </textarea>
+            <div>
+                <textarea class="display-output" id="sort" rows="3" cols="35" readonly=1 value="">
+    </textarea>
+            </div>
+            <div>
+                <textarea class="display-output" id="maxmin" rows="3" cols="35" readonly=1 value="">
+        </textarea>
+            </div>
+            <div>
+                <textarea class="display-output" id="total" rows="3" cols="35" readonly=1 value="">
+        </textarea>
+            </div>
+            <div>
+                <textarea class="display-output" id="classify" rows="3" cols="35" readonly=1 value="">
+        </textarea>
+            </div>
+            <div>
+                <textarea class="display-output" id="average" rows="3" cols="35" readonly=1 value="">
+        </textarea>
+            </div>
+            <div>
+                <textarea class="display-output" id="median" rows="3" cols="35" readonly=1 value="">
+        </textarea>
+            </div>
+            <div>
+                <textarea class="display-output" id="data-sent" rows="4" cols="35" readonly=1 value="">
+        </textarea>
+            </div>
+        </div>
+</body>
+
+<script type="text/javascript">
+</script>
+
+</html>
